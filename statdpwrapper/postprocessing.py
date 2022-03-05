@@ -38,6 +38,9 @@ class Postprocessing(ABC):
         """
         pass
 
+    def __repr__(self):
+        return self.__str__()
+
 
 class HammingDistancePP(Postprocessing):
     """
@@ -277,8 +280,10 @@ class PostprocessedAlgorithm:
         self.__name__ = str(postprocessing)
 
     def __str__(self):
-        return "{}_{}".format(str(self.algorithm), str(self.postprocessing))
+        return "{}_{}".format(self.algorithm.__name__, str(self.postprocessing))
 
+    def __repr__(self):
+        return self.__str__()
 
 the_zero_noise_prng = ZeroNoisePrng()
 
