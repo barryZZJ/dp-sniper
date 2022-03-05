@@ -76,6 +76,6 @@ def detect_counterexample(algorithm, test_epsilon, default_kwargs=None, database
             result.append((epsilon, float(p), d1, d2, kwargs, event))
             if not quiet:
                 tqdm.tqdm.write(f'Epsilon: {epsilon} | p-value: {p:5.3f} | Event: {event}')
-            logger.debug(f'D1: {d1} | D2: {d2} | kwargs: {kwargs}')
+            logger.info(f'D1: {d1} | D2: {d2} | kwargs: {kwargs}')
 
         return result

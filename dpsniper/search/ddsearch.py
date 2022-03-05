@@ -79,7 +79,7 @@ class DDSearch:
     @staticmethod
     def _one_input_pair(task):
         # set context for child process
-        optimizer, a1, a2 = task
+        optimizer, a1, a2 = task  # optimizer type: DDSearch
         log.append_context(class_name(optimizer.mechanism))
         pr_estimator = EpsEstimator(optimizer.pr_estimator)
 
