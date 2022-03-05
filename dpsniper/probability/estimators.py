@@ -84,13 +84,14 @@ class EpsEstimator:
         self.pr_estimator = pr_estimator
         self.allow_swap = allow_swap
 
-    def compute_eps_estimate(self, a1, a2, attack: Attack) -> (float, float):
+    def compute_eps_estimate(self, a1, a2, attack: Attack) -> (float, float, bool):
         """
         Estimates eps(a2, a2, attack) using samples.
 
         Returns:
             a tuple (eps, lcb), where eps is the eps estimate and lcb is a lower confidence bound for eps
         """
+        swapped = False
         p1 = self.pr_estimator.compute_pr_estimate(a1, attack)
         p2 = self.pr_estimator.compute_pr_estimate(a2, attack)
         log.info("p1=%f, p2=%f", p1, p2)
@@ -101,12 +102,13 @@ class EpsEstimator:
             if self.allow_swap:
                 p1, p2 = p2, p1
                 log.debug("swapped probabilitites p1, p2")
+                swapped = True
             else:
                 log.warning("probability p1 < p2 for eps estimation")
 
         eps = self._compute_eps(p1, p2)
         lcb = self._compute_lcb(p1, p2)
-        return eps, lcb
+        return eps, lcb, swapped
 
     @staticmethod
     def _compute_eps(p1, p2):
