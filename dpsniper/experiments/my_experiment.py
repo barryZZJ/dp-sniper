@@ -14,6 +14,7 @@ class MyExperiment(BaseExperiment):
 
     def run(self):
         log.info("using configuration %s", self.config)
+        log.data("config", self.config.__dict__)
 
         attack_opt = DPSniper(self.mechanism, self.classifier_factory, self.config)
 
@@ -34,5 +35,10 @@ class MyExperiment(BaseExperiment):
         log.info("> eps     = {}".format(res.eps))
         log.info("> eps lcb = {}".format(res.lower_bound))
 
-        log.data("eps", res.eps)
-        log.data("eps_lcb", res.lower_bound)
+        log.data("best_result", res.to_json())
+
+        # log.data("a1", res.a1.tolist())
+        # log.data("a2", res.a2.tolist())
+        # log.data("attack", str(res.attack))
+        # log.data("eps", res.eps)
+        # log.data("eps_lcb", res.lower_bound)

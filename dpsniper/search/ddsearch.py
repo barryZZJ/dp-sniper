@@ -11,6 +11,10 @@ from dpsniper.search.ddwitness import DDWitness
 import os
 
 
+def class_name(obj):
+    return type(obj).__name__.split(".")[-1]
+
+
 class DDSearch:
     """
     The main DD-Search algorithm for testing differential privacy.
@@ -51,7 +55,7 @@ class DDSearch:
             if best is None or res > best:
                 best = res
 
-        log.data('best_result', best.to_json())
+        # log.data('best_result', best.to_json())
         return best
 
     def _compute_results_for_all_inputs(self):
@@ -74,24 +78,35 @@ class DDSearch:
 
     @staticmethod
     def _one_input_pair(task):
+        # set context for child process
         optimizer, a1, a2 = task
+        log.append_context(class_name(optimizer.mechanism))
         pr_estimator = EpsEstimator(optimizer.pr_estimator)
+
+        log.info("a1={}".format(a1))
+        log.info("a2={}".format(a2))
 
         log.debug("selecting attack...")
         with time_measure("time_dp_distinguisher"):
             attack = optimizer.attack_optimizer.best_attack(a1, a2)
-        log.debug("best attack: %s", attack)
+        log.info("attack: %s", attack)
 
         cur = DDWitness(a1, a2, attack)
         log.debug("computing estimate for eps...")
         with time_measure("time_estimate_eps"):
             cur.compute_eps_using_estimator(pr_estimator)
-        log.debug("current eps: %s", cur.eps)
-        log.data("eps_for_sample", cur.eps)
+        log.info("current eps: %s", cur.eps)
 
         log.debug("storing result...")
         filename = cur.to_tmp_file()
 
+        log.data("result", cur.to_json())
+        # log.data("a1", a1.tolist())
+        # log.data("a2", a2.tolist())
+        # log.data("attack", str(attack))
+        # log.data("eps_for_sample", cur.eps)
+
         log.debug("done!")
+        log.pop_context()
         return filename
 

@@ -144,7 +144,8 @@ class MultiLayerPerceptron(StableClassifier):
 
         # logging
         log_dir = self._get_tensorboard_log_dir()
-        writer = SummaryWriter(log_dir=log_dir)
+        # writer = SummaryWriter(log_dir=log_dir)
+        writer=None
 
         # training
         self.model.train()
@@ -159,7 +160,7 @@ class MultiLayerPerceptron(StableClassifier):
             # run epochs on this batch
             self._train_one_batch(batch_idx, x_train, y_train, x_test, y_test, writer, optimizer, scheduler)
 
-        writer.close()
+        # writer.close()
 
     def _train_one_batch(self, batch_idx: int, x_train, y_train, x_test, y_test, writer, optimizer, scheduler):
         for epoch in range(self.epochs):
@@ -188,18 +189,18 @@ class MultiLayerPerceptron(StableClassifier):
 
             # logging
             step_idx = (batch_idx-1)*self.epochs + epoch
-            writer.add_scalar('Loss/train', loss.item(), step_idx)
+            # writer.add_scalar('Loss/train', loss.item(), step_idx)
             log.debug('Batch {}, epoch {} (global step {}): train loss: {}'.format(batch_idx, epoch, step_idx, loss.item()))
 
             if x_test is not None:
                 # compute test loss
                 y_pred_test = self.model(x_test).squeeze()
                 loss_test = self.criterion(y_pred_test, y_test.squeeze())
-                writer.add_scalar('Loss/test', loss_test.item(), step_idx)
+                # writer.add_scalar('Loss/test', loss_test.item(), step_idx)
 
                 # compute testing accuracy
                 accuracy_test = 1 - torch.mean(torch.abs(torch.round(y_pred_test) - y_test))
-                writer.add_scalar('Accuracy/test', accuracy_test.item(), step_idx)
+                # writer.add_scalar('Accuracy/test', accuracy_test.item(), step_idx)
 
     def _run(self, features):
         """

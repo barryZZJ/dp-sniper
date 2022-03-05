@@ -47,8 +47,6 @@ class DDConfig:
 
     def __str__(self):
         s = "{"
-        d = dir(self)
-        for name in d:
-            if not name.startswith('__'):
-                s = s + "{}={}, ".format(name, str(getattr(self, name)))
+        for name, value in self.__dict__.items():
+            s = s + "{}={}, ".format(name, str(value))
         return s + "}"

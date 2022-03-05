@@ -2,6 +2,7 @@ from dpsniper.attack.attack import Attack
 from dpsniper.classifiers.stable_classifier import StableClassifier
 
 import numpy as np
+import os
 
 
 class MlAttack(Attack):
@@ -37,4 +38,15 @@ class MlAttack(Attack):
         return above + self.q * equal
 
     def __str__(self):
-        return "t = {}, q = {}, CLASSIFIER = {}".format(self.thresh, self.q, str(self.classifier))
+        if self.classifier.state_dict_file is None:
+            return "t = {}, q = {}, CLASSIFIER = {}".format(self.thresh, self.q, str(self.classifier))
+        return "t = {}, q = {}, CLASSIFIER = {}, file = {}".format(self.thresh, self.q, str(self.classifier), os.path.basename(self.classifier.state_dict_file))
+
+    def to_json(self):
+        d = {
+            't': self.thresh,
+            'q': self.q,
+            'CLSSIFIER': str(self.classifier),
+            'file': os.path.basename(self.classifier.state_dict_file) if self.classifier.state_dict_file is not None else None
+        }
+        return d

@@ -1,5 +1,8 @@
 import argparse
+import datetime
 import multiprocessing
+import os
+import socket
 
 from statdpwrapper.experiments.exp_with_pp import run_with_postprocessing
 from statdpwrapper.experiments.exp_without_pp import run_without_postprocessing
@@ -32,9 +35,14 @@ NumericalSVT            algorithms_ext.numerical_svt
 """
 
 if __name__ == "__main__":
+    timestamp = '{:%Y-%m-%d_%H-%M-%S}'.format(datetime.datetime.now())
+    hostname = socket.gethostname()
+    log_tag = timestamp + '_' + hostname
+    log_dir = os.path.join("logs", log_tag)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--processes', type=int, help='number of processes to use', default=multiprocessing.cpu_count())
-    parser.add_argument('--output-dir', required=True, help='Directory for output data')
+    parser.add_argument('--output-dir', default=log_dir, help='Directory for output data')
     parser.add_argument('--no-postprocessing', help='deactivates postprocessing (equivalent to original StatDP, requires --alg)', action="store_true")
     parser.add_argument('--alg', type=str, help='algorithm to evaluate (all if not specified)')
     parser.add_argument('--postfix', type=str, help='postfix for logs', default="")

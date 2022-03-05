@@ -93,7 +93,7 @@ class EpsEstimator:
         """
         p1 = self.pr_estimator.compute_pr_estimate(a1, attack)
         p2 = self.pr_estimator.compute_pr_estimate(a2, attack)
-        log.debug("p1=%f, p2=%f", p1, p2)
+        log.info("p1=%f, p2=%f", p1, p2)
         log.data("p1", p1)
         log.data("p2", p2)
 

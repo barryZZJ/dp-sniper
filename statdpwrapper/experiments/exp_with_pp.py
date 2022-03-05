@@ -55,5 +55,7 @@ def run_with_postprocessing(n_processes: int, out_dir: str, only_mechanism=None,
             pp_config = statdp_postprocessing_map[alg_name]
             num_inputs = statdp_num_inputs_map[alg_name]
             sensitivity = statdp_sensitivity_map[alg_name]
+
             run_statdp(alg_name, mechanism, pp_config, num_inputs, sensitivity, kwargs)
+
     log.info("finished experiments")

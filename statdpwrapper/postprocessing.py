@@ -259,10 +259,10 @@ class PostprocessingConfig:
                  categories=[],
                  disable_pp=False):
         self.is_numerical = is_numerical
-        self.is_categorical = is_categorical
+        self.is_categorical = is_categorical  # all SVTs, Rappor, OneTimeRappor
         self.has_variable_dimensions = has_variable_dimensions
         self.max_dimensions = max_dimensions
-        self.categories = categories
+        self.categories = categories  # e.g. [True, False]
         self.disable_pp = disable_pp
 
 

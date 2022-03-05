@@ -1,0 +1,40 @@
+run test example:
+dpsniper/example.py
+
+run experiment:
+dpsniper/experiments/__main__.py
+config setting:
+dpsniper/search/ddconfig.py
+
+多进程：多个子进程并行计算不同的input情况，最后汇总到主进程选出最优的情况。
+
+run statdpwrapper:
+statdpwrapper/experiments/__main__.py
+pp = post processing
+
+logs:
+set loglevel: exp_default.run_exp_default()
+ctx: context
+主log：
+experiment_runner, my_experiment,
+DDSearch.run()
+DDSearch._compute_results_for_all_inputs()
+子进程log：
+DDSearch._one_input_pair()
+
+子进程中的p1, p2是低精度的，搜索时的结果；
+主进程中的p1, p2是高进度的，只用于最终结果。
+
+数据保存：
+ddwitness.to_tmp_file()会用pickle把整个witness存入tmp文件中，最后会删除，
+同时也会保存模型的参数到models中（不删除）
+
+TODO:
+跑试验，数据处理
+尝试可视化attack中包含的b
+Done:
+主data_log中去除不需要的time记录。
+子进程data_log中标注当前的算法。
+子进程log/data_log中说明当前的input + data_log:搜索到的attack
+记录attack到data_log时加入.model文件名（子进程log中没有）
+不保存tensorboard file，太占空间(classifiers.multi_layer_perceptron.py:147)

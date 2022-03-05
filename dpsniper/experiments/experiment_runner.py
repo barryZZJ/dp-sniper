@@ -77,8 +77,9 @@ class ExperimentRunner:
 
         log_file = os.path.join(logs_dir, "{}_log.log".format(self.series_name))
         data_file = os.path.join(logs_dir, "{}_data.log".format(self.series_name))
-        log.configure("ERROR", log_file=log_file, file_level=self.file_level, data_file=data_file)
+        log.configure("INFO", log_file=log_file, file_level=self.file_level, data_file=data_file)
 
+        # spawn new contexts here
         with initialize_parallel_executor(n_processes, self.output_dir):
             if sequential:
                 for exp in self.experiments:

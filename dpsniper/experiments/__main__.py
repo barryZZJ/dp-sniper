@@ -1,5 +1,8 @@
 import argparse
 import multiprocessing
+import datetime
+import socket
+import os
 
 from dpsniper.search.ddsearch import DDConfig
 from dpsniper.experiments.exp_default import run_exp_default
@@ -9,8 +12,13 @@ from dpsniper.utils.my_logging import log
 
 
 if __name__ == "__main__":
+    timestamp = '{:%Y-%m-%d_%H-%M-%S}'.format(datetime.datetime.now())
+    hostname = socket.gethostname()
+    log_tag = timestamp + '_' + hostname
+    log_dir = os.path.join("logs", log_tag)
+
     parser = argparse.ArgumentParser()
-    parser.add_argument('--output-dir', required=True, help='directory for output data')
+    parser.add_argument('--output-dir', default=log_dir, help='directory for output data')
     parser.add_argument('--reg', action="store_true",
                         help='run experiments on all algorithms using logistic regression classifier')
     parser.add_argument('--mlp', action="store_true",
@@ -30,7 +38,7 @@ if __name__ == "__main__":
 
     n_processes = args.processes
     torch_initialize(args.torch_threads, args.torch_device)
-    log.configure("WARNING")
+    log.configure("INFO")
 
     if args.reg:
         run_exp_default("dd_search_reg", False, args.output_dir, DDConfig(n_processes=n_processes))

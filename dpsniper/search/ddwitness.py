@@ -3,6 +3,8 @@ import tempfile
 import os
 from typing import Tuple
 
+import numpy as np
+
 from dpsniper.search.ddconfig import DDConfig
 from dpsniper.probability.estimators import PrEstimator, EpsEstimator
 from dpsniper.mechanisms.abstract import Mechanism
@@ -78,5 +80,12 @@ class DDWitness:
         return str(d)
 
     def to_json(self):
-        d = {str(k): v if isinstance(v, float) else str(v) for k, v in self.__dict__.items()}
+        d = {}
+        for k, v in self.__dict__.items():
+            if k == "attack":
+                d[k] = v.to_json()
+            elif isinstance(v, np.ndarray):
+                d[k] = v.tolist()
+            else:
+                d[k] = v
         return d

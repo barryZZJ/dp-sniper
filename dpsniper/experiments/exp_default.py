@@ -19,7 +19,7 @@ def class_name(obj):
 
 
 def run_exp_default(series_name: str, use_mlp: bool, output_path: str, config: 'DDConfig'):
-    runner = ExperimentRunner(output_path, series_name, log_debug=True)
+    runner = ExperimentRunner(output_path, series_name, log_debug=False)
 
     def run_dpsniper(mechanism, input_generator: PatternGenerator, output_size, feature_transform=None):
         if use_mlp:

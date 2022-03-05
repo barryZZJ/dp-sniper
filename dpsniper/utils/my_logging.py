@@ -47,7 +47,8 @@ class MyLogging:
 
         self.full_formatter = logging.Formatter('%(asctime)s [%(levelname)5s]: %(message)s',
                                                 datefmt="%Y-%m-%d_%H-%M-%S")
-        self.standard_formatter = logging.Formatter('[%(levelname)5s] %(message)s')
+        self.standard_formatter = logging.Formatter('%(asctime)s [%(levelname)5s]: %(message)s',
+                                                datefmt="%Y-%m-%d_%H-%M-%S")
         self.minimal_formatter = logging.Formatter('%(message)s')
 
         self._config = MyLoggingConfig()
@@ -135,6 +136,12 @@ class MyLogging:
     def get_config(self):
         return self._config
 
+    def append_context(self, context):
+        self._config.context.append(context)
+
+    def pop_context(self):
+        return self._config.context.pop()
+
     def critical(self, msg, *args, **kwargs):
         self.the_log.critical(msg, *args, **kwargs)
 
@@ -151,7 +158,7 @@ class MyLogging:
         self.the_log.debug(msg, *args, **kwargs)
 
     def data(self, key, value):
-        d = {"ctx": self._config.context, key: value}
+        d = {"alg": self._config.context, key: value}
         self.the_log.log(DATA, json.dumps(d))
 
     @contextlib.contextmanager
@@ -180,4 +187,4 @@ def time_measure(key):
     yield
     end = time.perf_counter()
     elapsed = end - start
-    log.data(key, elapsed)
+    # log.data(key, elapsed)
