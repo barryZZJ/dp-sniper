@@ -12,8 +12,6 @@ class MyLogParser:
     def __init__(self, logfile):
         self.logfile = logfile
         self.dAlgs = {}
-        self.pat = re.compile(r'(reg|mlp)_data-proc\d\.log')
-        self.clsfr = self.pat.search(self.logfile).group(1)
 
         with open(self.logfile) as f:
             for line in f:
@@ -22,21 +20,21 @@ class MyLogParser:
                 d = self.dAlgs.setdefault(alg, {})
                 del dAlg['alg']
                 for k, v in dAlg.items():
-                    if k == 'result':
+                    if k == 'statdp_temp_result':
                         d.setdefault('a1', []).append(v['a1'])
                         d.setdefault('a2', []).append(v['a2'])
-                        d.setdefault('s', []).append(
-                            self.format_attack_dict(v['attack']))
+                        d.setdefault('s', []).append(v['event'])
                         d.setdefault('eps', []).append(v['eps'])
                         d.setdefault('lcb', []).append(v['lower_bound'])
-                    else:
+                        d.setdefault('pp', []).append(v['postprocessing'])
+                    elif k in ['p1', 'p2']:
                         d.setdefault(k, []).append(v)
 
-    def get_witnesses(self, decimals=3):
+    def get_witness(self, decimals=3):
         for alg, d in self.dAlgs.items():
             a1 = self.round(d['a1'], decimals)
             a2 = self.round(d['a2'], decimals)
-            s = d['s']
+            s = self.round(d['s'], decimals)
             p1 = self.round(d['p1'], decimals)
             p2 = self.round(d['p2'], decimals)
             eps = d['eps']
@@ -48,16 +46,11 @@ class MyLogParser:
             lcb[np.isnan(lcb)] = 0
             lcb = self.round(lcb, decimals)
             for i in range(len(a1)):
-                yield alg, Witness(a1[i], a2[i], s[i], eps[i], 'dp-sniper-{}'.format(self.clsfr), p1=p1[i], p2=p2[i],lcb=lcb[i])
+                yield alg, Witness(a1[i], a2[i], s[i], eps[i], 'statdpwrapper', p1=p1[i], p2=p2[i],lcb=lcb[i])
 
     @staticmethod
     def round(arr, decimals):
         return np.round(arr, decimals).tolist()
-
-    @staticmethod
-    def format_attack_dict(d):
-        s = ', '.join(["{}={}".format(k, v) for k, v in d.items()])
-        return s
 
     def get_universal_alg_name(self, name):
         name_map = {
@@ -82,26 +75,24 @@ class MyLogParser:
             return name
         return uni_name
 
-
-
-class DPSniperLoader(DataLoader):
+class StatDPWarpperLoader(DataLoader):
     def __init__(self):
-        super(DPSniperLoader, self).__init__()
+        super(StatDPWarpperLoader, self).__init__()
         basePath = '/media/barry/Data/DPDisprover/dp-sniper'
-        self.logsdir = os.path.join(basePath, 'dpsniper/experiments/logs')
-        self.pat = re.compile(r'data-proc\d\.log')
+        self.logsdir = os.path.join(basePath, 'statdpwrapper/experiments/logs')
 
     def load_data(self):
         for dir, dirnames, filenames in os.walk(self.logsdir):
             for filename in filenames:
-                if self.pat.search(filename) is not None:
+                if filename.endswith('data.log'):
                     p = MyLogParser(os.path.join(dir, filename))
-                    for alg, wit in p.get_witnesses():
+                    for alg, wit in p.get_witness():
                         self._push(alg, wit)
+
 
 if __name__ == '__main__':
     from dataVisualizer import DataVisualizer
-    dl = DPSniperLoader()
+    dl = StatDPWarpperLoader()
     dl.load_data()
     vi = DataVisualizer(dl)
-    vi.to_excel(filename="dpsniper.xls")
+    vi.to_excel(filename='statdpwrapper.xls')
