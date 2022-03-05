@@ -22,23 +22,20 @@ class MyExperiment(BaseExperiment):
             log.debug("running dd-search...")
             opt = DDSearch(self.mechanism, attack_opt, self.input_pair_sampler, self.config)
             res = opt.run()
-        log.debug("finished dd-search, preliminary eps=%f", res.eps)
+        log.info("finished dd-search, preliminary eps=%f", res.eps)
 
-        with time_measure("time_final_estimate_eps"):
-            log.debug("computing final eps estimate...")
-            res.compute_eps_high_precision(self.mechanism, self.config)
+        log.warning("Skipped estimating eps with high precision to save time")
 
-        log.info("done!")
-        log.info("> a1      = {}".format(res.a1))
-        log.info("> a2      = {}".format(res.a2))
-        log.info("> attack  = {}".format(res.attack))
-        log.info("> eps     = {}".format(res.eps))
-        log.info("> eps lcb = {}".format(res.lower_bound))
+        # with time_measure("time_final_estimate_eps"):
+        #     log.debug("computing final eps estimate...")
+        #     res.compute_eps_high_precision(self.mechanism, self.config)
+        #
+        # log.info("done!")
+        # log.info("> a1      = {}".format(res.a1))
+        # log.info("> a2      = {}".format(res.a2))
+        # log.info("> attack  = {}".format(res.attack))
+        # log.info("> eps     = {}".format(res.eps))
+        # log.info("> eps lcb = {}".format(res.lower_bound))
+        #
+        # log.data("best_result", res.to_json())
 
-        log.data("best_result", res.to_json())
-
-        # log.data("a1", res.a1.tolist())
-        # log.data("a2", res.a2.tolist())
-        # log.data("attack", str(res.attack))
-        # log.data("eps", res.eps)
-        # log.data("eps_lcb", res.lower_bound)
