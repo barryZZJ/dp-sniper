@@ -76,8 +76,8 @@ class StatDPPrEstimator(PrEstimator):
     A probability estimator based on samples for StatDP algorithm implementations.
     """
 
-    def __init__(self, mechanism, n_samples: int, config: DDConfig, use_parallel_executor=False, **kwargs):
-        super().__init__(mechanism, n_samples, config, use_parallel_executor)
+    def __init__(self, mechanism, n_samples: int, config: DDConfig, use_parallel_executor=False, log_outputs=True, **kwargs):
+        super().__init__(mechanism, n_samples, config, use_parallel_executor, log_outputs)
         self.mechanism_kwargs = kwargs
 
     def _get_samples(self, a, n_samples):

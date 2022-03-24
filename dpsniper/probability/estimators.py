@@ -7,14 +7,68 @@ from dpsniper.search.ddconfig import DDConfig
 
 import numpy as np
 import math
+from bitstring import Bits
 
+class MyBits:
+    def __init__(self, vals):
+        self.vals = Bits(reversed(vals))
+    def __hash__(self):
+        hash(self.vals.uint)
+    def __lt__(self, other):
+        return self.vals.uint < other.vals.uint
+    def __eq__(self, other):
+        return self.vals.uint == other.vals.uint
+    def __iter__(self):
+        return reversed(self.vals)
+    def __repr__(self):
+        return str(list(self))
+
+class MyReals:
+    def __init__(self, vals):
+        if isinstance(vals, float) or isinstance(vals, np.float):
+            self.vals = [vals]
+        else:
+            self.vals = vals
+        self.thresh = 1
+    def __lt__(self, other):
+        sum1 = sum(self.vals)
+        sum2 = sum(other.vals)
+        return sum1 < sum2
+    def __eq__(self, other):
+        eq_mask = np.round(self.vals) == np.round(other.vals)
+        return eq_mask.all()
+    def __iter__(self):
+        return self.vals.__iter__()
+    def __repr__(self):
+        return self.vals.__repr__()
+# r = [-195.54639776473698, 1.7573380844718294, 11.98242111053098, 46.35669983374418, 8.498668642844017]
+# r2 = [-195.04639776473698, 1.7573380844718294, 11.98242111053098, 46.35669983374418, 8.498668642844017]
+# r = MyReals(r)
+# r2 = MyReals(r2)
+# ar = np.array([r,r2])
+# u = np.unique(ar)
+# b,b2,b3=MyBits([False,True]), MyBits([True]), MyBits([False,True])
+# a = np.array([b,b2,b3])
+# r=np.unique(a)
+
+def unique(a, b):
+    if isinstance(a, np.ndarray) or isinstance(a, list):
+        if isinstance(a[0], MyBits) or isinstance(a[0], MyReals):
+            a, indices = np.unique(a, return_index=True)
+        else:
+            raise NotImplementedError
+    else:
+        a, indices = np.unique(a, return_index=True, axis=0)
+
+    b = np.take(b, indices)
+    return a.tolist(), b.tolist()
 
 class PrEstimator:
     """
     Class for computing an estimate of Pr[M(a) in S].
     """
 
-    def __init__(self, mechanism: Mechanism, n_samples: int, config: DDConfig, use_parallel_executor: bool = False):
+    def __init__(self, mechanism: Mechanism, n_samples: int, config: DDConfig, use_parallel_executor: bool = False, log_outputs=False):
         """
         Creates an estimator.
 
@@ -27,18 +81,40 @@ class PrEstimator:
         self.n_samples = n_samples
         self.use_parallel_executor = use_parallel_executor
         self.config = config
+        self.log_outputs = log_outputs
 
     def compute_pr_estimate(self, a, attack: Attack) -> float:
         """
         Returns:
              An estimate of Pr[M(a) in S]
         """
+        log_bs = []
+        log_bprobs = []
+
         if not self.use_parallel_executor:
-            frac_cnt = PrEstimator._compute_frac_cnt((self, attack, a, self.n_samples))
+            res = self._compute_frac_cnt((self, attack, a, self.n_samples))
+            frac_cnt, log_bs, log_bprobs = res
         else:
             inputs = [(self, attack, a, batch) for batch in split_into_parts(self.n_samples, self.config.n_processes)]
-            res = the_parallel_executor.execute(PrEstimator._compute_frac_cnt, inputs)
-            frac_cnt = math.fsum(res)
+            res = the_parallel_executor.execute(self._compute_frac_cnt, inputs)
+            counts = []
+            for count, frac_log_b, frac_log_bprob in res:
+                counts.append(count)
+                log_bs.extend(frac_log_b)
+                log_bprobs.extend(frac_log_bprob)
+
+            frac_cnt = math.fsum(counts)
+        if self.log_outputs:
+            if len(log_bs) > 0:
+                log_bs, log_bprobs = unique(log_bs, log_bprobs)
+                if isinstance(log_bs[0], list) or isinstance(log_bs[0], MyBits) or isinstance(log_bs[0], MyReals):
+                    log.data('bs', [list(b) for b in log_bs])
+                else:
+                    log.data('bs', log_bs)
+            else:
+                log.data('bs', log_bs)
+            log.data('bprobs', log_bprobs)
+
         pr = frac_cnt / self.n_samples
         return pr
 
@@ -48,17 +124,41 @@ class PrEstimator:
     def _check_attack(self, bs, attack):
         return attack.check(bs)
 
-    @staticmethod
-    def _compute_frac_cnt(args):
+    def _compute_frac_cnt(self, args):
         pr_estimator, attack, a, n_samples = args
 
         frac_counts = []
+        log_bs = []
+        log_bprobs = []
         for sequential_size in split_by_batch_size(n_samples, pr_estimator.config.prediction_batch_size):
             bs = pr_estimator._get_samples(a, sequential_size)
             res = pr_estimator._check_attack(bs, attack)
+
+            if self.log_outputs:
+                if isinstance(bs[0], np.ndarray) or isinstance(bs[0], list):
+                    if isinstance(bs[0][0], bool):  # statdp svt {T,F}^m
+                        aa = np.array([MyBits(bb) for bb in bs])[res>0]
+                    elif isinstance(bs[0][0], float):  # statdp real / dpsniper noisyHist
+                        aa = np.array([MyReals(bb) for bb in bs])[res>0]
+                    elif isinstance(bs[0][0], np.int64):  # dpsniper svt
+                        aa = np.array(bs)[res > 0]
+                    elif 'rappor' in self.mechanism.__class__.__name__.lower() and isinstance(bs[0][0], np.float64):  # dpsniper *rappor
+                        aa = np.array(bs)[res > 0]
+                    else:
+                        raise NotImplementedError
+                elif isinstance(bs[0], float) or isinstance(bs[0], np.float):  # dpsniper real
+                    aa = np.array([MyReals(bb) for bb in bs])[res>0]
+                else:
+                    aa = np.array(bs)[res>0]
+                bb = res[res>0]
+                if len(aa) > 0:
+                    aa, bb = unique(aa, bb)
+                log_bs.extend(aa)
+                log_bprobs.extend(bb)
+
             frac_counts += [math.fsum(res)]
 
-        return math.fsum(frac_counts)
+        return math.fsum(frac_counts), log_bs, log_bprobs
 
     def get_variance(self):
         """
