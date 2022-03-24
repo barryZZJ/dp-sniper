@@ -202,13 +202,12 @@ class EpsEstimator:
             if self.allow_swap:
                 p1, p2 = p2, p1
                 log.debug("swapped probabilitites p1, p2")
-                swapped = True
             else:
                 log.warning("probability p1 < p2 for eps estimation")
 
         eps = self._compute_eps(p1, p2)
         lcb = self._compute_lcb(p1, p2)
-        return eps, lcb, swapped
+        return eps, lcb
 
     @staticmethod
     def _compute_eps(p1, p2):

@@ -31,8 +31,8 @@ class BinarySearch:
         if postprocessing.requires_noisefree_reference:
             noisefree_reference = self.algorithm(the_zero_noise_prng, a0, **self.default_kwargs)
             attack.set_noisefree_reference(noisefree_reference)
-        eps_verified, eps_lcb, swapped = self.epsEstimator.compute_eps_estimate(a1, a2, attack)
-        return eps_verified, eps_lcb, (a1, a2) if not swapped else (a2, a1)
+        eps_verified, eps_lcb = self.epsEstimator.compute_eps_estimate(a1, a2, attack)
+        return eps_verified, eps_lcb
 
     def find(self, p_value_threshold: float, precision: float) -> Tuple:
         """
@@ -96,7 +96,9 @@ class BinarySearch:
             p_value, attack = self._probe(eps)
 
         # record temp witness:
-        log_eps, log_eps_lcb, (log_a1, log_a2) = self.compute_eps_estimate(prev_attack[0], prev_attack[1], prev_attack[2], prev_attack[3], prev_attack[4])
+        log.info("running estimation...")
+        log_eps, log_eps_lcb = self.compute_eps_estimate(prev_attack[0], prev_attack[1], prev_attack[2], prev_attack[3], prev_attack[4])
+        log_a1, log_a2 = prev_attack[0], prev_attack[1]
         log.data("statdp_temp_result", {"eps": log_eps,
                                         "lower_bound": log_eps_lcb,
                                         "p_value": prev_p_value,
@@ -104,6 +106,7 @@ class BinarySearch:
                                         "a2": log_a2,
                                         "event": prev_attack[2],
                                         "postprocessing": str(prev_attack[3])})
+        log.info("StatDP temp result: eps=%f (lcb=%f)", log_eps, log_eps_lcb)
         return (eps/2, prev_attack), (eps, attack)
 
     def _binary_search(self, left_tup, right_tup, p_value_threshold: float, precision: float):
@@ -120,9 +123,11 @@ class BinarySearch:
                 left = mid
                 left_attack = mid_attack
                 # record temp witness:
-                log_eps, log_eps_lcb, (log_a1, log_a2) = self.compute_eps_estimate(left_attack[0], left_attack[1],
+                log.info("running estimation...")
+                log_eps, log_eps_lcb = self.compute_eps_estimate(left_attack[0], left_attack[1],
                                                                                    left_attack[2], left_attack[3],
                                                                                    left_attack[4])
+                log_a1, log_a2 = left_attack[0], left_attack[1]
                 log.data("statdp_temp_result", {"eps": log_eps,
                                                 "lower_bound": log_eps_lcb,
                                                 "p_value": p_value,
@@ -130,6 +135,7 @@ class BinarySearch:
                                                 "a2": log_a2,
                                                 "event": left_attack[2],
                                                 "postprocessing": str(left_attack[3])})
+                log.info("StatDP temp result: eps=%f (lcb=%f)", log_eps, log_eps_lcb)
             else:
                 right = mid
         log.info("finished binary search")
