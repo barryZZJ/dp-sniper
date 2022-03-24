@@ -30,6 +30,7 @@ if __name__ == "__main__":
     parser.add_argument('--processes', type=int, help='number of processes to use', default=multiprocessing.cpu_count())
     parser.add_argument('--torch-device', default='cpu', help='the pytorch device use (untested on GPU!)')
     parser.add_argument('--torch-threads', default=8, help='the number of threads for pytorch to use')
+    parser.add_argument('--test', action="store_true")
     args = parser.parse_args()
 
     if (not args.reg) and (not args.mlp) and (not args.floating) and (not args.floating_fixed):
@@ -40,14 +41,18 @@ if __name__ == "__main__":
     torch_initialize(args.torch_threads, args.torch_device)
     log.configure("INFO")
 
+    config = DDConfig(n_processes=n_processes)
+    if args.test:
+        config = DDConfig(n_train=10, n=10, n_check=10, n_final=10, n_processes=2)
+
     if args.reg:
-        run_exp_default("dd_search_reg", False, args.output_dir, DDConfig(n_processes=n_processes))
+        run_exp_default("dd_search_reg", False, args.output_dir, config)
 
     if args.mlp:
-        run_exp_default("dd_search_mlp", True, args.output_dir, DDConfig(n_processes=n_processes))
+        run_exp_default("dd_search_mlp", True, args.output_dir, config)
 
     if args.floating:
-        run_exp_floating_point(args.output_dir, DDConfig(n_processes=n_processes))
+        run_exp_floating_point(args.output_dir, config)
 
     if args.floating_fixed:
-        run_exp_floating_fixed(args.output_dir, DDConfig(n_processes=n_processes))
+        run_exp_floating_fixed(args.output_dir, config)
