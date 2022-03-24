@@ -95,6 +95,7 @@ class ExperimentRunner:
     @staticmethod
     def _run_one_experiment(args):
         exp, comment = args
+        # exp: MyExperiment
         log.info("running experiment %s", exp.experiment_name)
         log.info("comment: %s", comment)
         with log_context(exp.experiment_name):

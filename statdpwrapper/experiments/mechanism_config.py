@@ -18,7 +18,7 @@ def register(name, mechanism, pp_config: PostprocessingConfig, num_inputs: tuple
     statdp_num_inputs_map[name] = num_inputs
     statdp_sensitivity_map[name] = sensitivity
 
-
+# num_num_inputs 有两个元素相当于statDP跑两次
 register("LaplaceMechanism",
          laplace_mechanism,
          PostprocessingConfig(
