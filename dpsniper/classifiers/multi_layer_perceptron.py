@@ -31,7 +31,9 @@ class MultiLayerPerceptron(StableClassifier):
                  hidden_sizes: Tuple = (10, 5),
                  epochs: int = 10,
                  regularization_weight: float = 0.001,
-                 label: Optional[str] = None):
+                 label: Optional[str] = None,
+                 state_dict_file: str = None,
+                 do_log:bool = True):
         """
         Creates a feedforward neural network classifier.
 
@@ -55,8 +57,8 @@ class MultiLayerPerceptron(StableClassifier):
         self.label = label
         self.regularization_weight = regularization_weight
 
-        self.state_dict_file = None  # representation of model for pickling
-        self.tensorboard_dir = get_output_directory('training', 'tensorboard')
+        self.state_dict_file = state_dict_file  # representation of model for pickling
+        self.tensorboard_dir = get_output_directory('training', 'tensorboard') if do_log else None
 
         # initialize torch-specific fields
         self.model = None

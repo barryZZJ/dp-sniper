@@ -69,6 +69,13 @@ class StableClassifier(ABC):
         else:
             return None
 
+    def init_normalizer(self, x, mean, scale):
+        x = self._transform(x)
+        if self.normalize_input:
+            self.normalizer = preprocessing.StandardScaler().fit(x)
+        self.normalizer.mean_ = mean
+        self.normalizer.scale_ = scale
+
     def predict_probabilities(self, x):
         """
         Computes the probabilities p(y = 0 | x) for a vector x based on the trained classifier.
