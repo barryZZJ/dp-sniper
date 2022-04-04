@@ -29,13 +29,17 @@ class DDWitness:
         self.attack = attack
         self.eps = None     # estimate of epsilon
         self.lower_bound = None     # lower bound on epsilon
+        self.p1 = None
+        self.p2 = None
 
     def compute_eps_using_estimator(self, estimator: EpsEstimator):
         """
         Computes epsilon and its lower bound using the provided probability estimator.
         Sets self.eps and self.lower_bound.
         """
-        self.eps, self.lower_bound = estimator.compute_eps_estimate(self.a1, self.a2, self.attack)
+
+        self.eps, self.lower_bound, self.p1, self.p2 = estimator.compute_eps_estimate(self.a1, self.a2, self.attack, return_probs=True)
+
 
     def compute_eps_high_precision(self, mechanism: Mechanism, config: DDConfig) -> Tuple:
         """

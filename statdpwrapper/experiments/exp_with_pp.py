@@ -25,26 +25,28 @@ def run_with_postprocessing(n_processes: int, out_dir: str, only_mechanism=None,
     log.configure("INFO", log_file=log_file, data_file=data_file, file_level="INFO")
 
     with initialize_parallel_executor(n_processes, out_dir):
-        mechanisms = ["LaplaceMechanism",
+        mechanisms = [
+                      "LaplaceMechanism",
                       "TruncatedGeometricMechanism",
                       "NoisyHist1",
                       "NoisyHist2",
-                      "ReportNoisyMax1",
-                      "ReportNoisyMax2",
+                      # "ReportNoisyMax1",
+                      # "ReportNoisyMax2",
                       "ReportNoisyMax3",
                       "ReportNoisyMax4",
-                      "SparseVectorTechnique1",
-                      "SparseVectorTechnique2",
-                      "SparseVectorTechnique3",
-                      "SparseVectorTechnique4",
-                      "SparseVectorTechnique5",
-                      "SparseVectorTechnique6",
+                      # "SparseVectorTechnique1",
+                      # "SparseVectorTechnique2",
+                      # "SparseVectorTechnique3",
+                      # "SparseVectorTechnique4",
+                      # "SparseVectorTechnique5",
+                      # "SparseVectorTechnique6",
                       "Rappor",
                       "OneTimeRappor",
-                      "LaplaceParallel",
-                      "SVT34Parallel",
-                      "PrefixSum",
-                      "NumericalSVT"]
+                      # "LaplaceParallel",
+                      # "SVT34Parallel",
+                      # "PrefixSum",
+                      # "NumericalSVT"
+        ]
 
         if only_mechanism is not None:
             mechanisms = [only_mechanism]

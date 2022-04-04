@@ -43,10 +43,10 @@ MECH_MAP = {
     'SVT4': 'SparseVectorTechnique4',
     'SVT5': 'SparseVectorTechnique5',
     'SVT6': 'SparseVectorTechnique6',
-    'ReportNoisyMax1-Lap': 'ReportNoisyMax1',
-    'ReportNoisyMax2-Exp': 'ReportNoisyMax2',
-    'ReportNoisyMax3-Lap': 'ReportNoisyMax3',
-    'ReportNoisyMax4-Exp': 'ReportNoisyMax4',
+    'ReportNoisyMax1': 'ReportNoisyMax1',
+    'ReportNoisyMax2': 'ReportNoisyMax2',
+    'ReportNoisyMax3': 'ReportNoisyMax3',
+    'ReportNoisyMax4': 'ReportNoisyMax4',
 }
 
 def get_run(row):

@@ -7,6 +7,7 @@ from dpsniper.attack.ml_attack import MlAttack
 from dpsniper.classifiers.classifier_factory import ClassifierFactory
 from dpsniper.classifiers.stable_classifier import StableClassifier
 from dpsniper.mechanisms.abstract import Mechanism
+from dpsniper.probability.estimators import PrEstimator, EpsEstimator
 from dpsniper.search.ddconfig import DDConfig
 from dpsniper.utils.my_logging import log, time_measure
 from dpsniper.utils.my_multiprocessing import split_into_parts, split_by_batch_size
@@ -30,6 +31,26 @@ class DPSniper:
         self.mechanism = mechanism
         self.classifier_factory = classifier_factory
         self.config = config
+        self.pr_estimator = PrEstimator(mechanism, self.config.n_check, self.config)
+        self.eps_estimator = EpsEstimator(self.pr_estimator)
+
+    def best_attack_binarysearch(self, a1, a2) -> MlAttack:
+        log.debug("Searching best attack using binary search for mechanism %s, classifier %s...",
+                  type(self.mechanism).__name__,
+                  type(self.classifier_factory).__name__)
+
+        classifier = self._train_classifier(a1, a2)
+
+        with time_measure("time_binsearch_threshold"):
+            log.debug("Binary searching threshold...")
+            q = 0
+            left_t = 0
+            right_t = 1
+            mid_t = (left_t+right_t)/2
+            attack = MlAttack(classifier, mid_t, q)
+            eps, eps_lcb = self.eps_estimator.compute_eps_estimate(a1, a2, attack)
+            #TODO determin how to find optimal t
+
 
     def best_attack(self, a1, a2) -> MlAttack:
         """

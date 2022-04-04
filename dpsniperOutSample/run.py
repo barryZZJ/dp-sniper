@@ -116,7 +116,17 @@ class Run:
         probs = self.classifier.predict_probabilities(bs)
         return bs, probs
 
+    def generate_out_prob_uniformly(self, min_b, max_b, step):
+        bs = np.atleast_2d(np.arange(min_b, max_b+step, step)).T
+        probs = self.classifier.predict_probabilities(bs)
+        return bs, probs
+
     def generate_respect_out_prob_samples(self, n):
+        '''
+        probs1: p(a1|b1)
+        probs2: p(a2|b2)
+        1-probs2: p(a1|b2)
+        '''
         b1 = self.mechanism.m(self.a1, n)
         b2 = self.mechanism.m(self.a2, n)
         if len(b1.shape) == 1:
@@ -140,10 +150,10 @@ MECH_MAP = {
     'SVT4': [SparseVectorTechnique4(c=1, t=1), 20],
     'SVT5': [SparseVectorTechnique5(c=1, t=1), 10],
     'SVT6': [SparseVectorTechnique6(c=1, t=1), 10],
-    'ReportNoisyMax1-Lap': [ReportNoisyMax1(), 1],
-    'ReportNoisyMax2-Exp': [ReportNoisyMax2(), 1],
-    'ReportNoisyMax3-Lap': [ReportNoisyMax3(), 1],
-    'ReportNoisyMax4-Exp': [ReportNoisyMax4(), 1],
+    'ReportNoisyMax1': [ReportNoisyMax1(), 1],
+    'ReportNoisyMax2': [ReportNoisyMax2(), 1],
+    'ReportNoisyMax3': [ReportNoisyMax3(), 1],
+    'ReportNoisyMax4': [ReportNoisyMax4(), 1],
     'OneTimeRAPPOR': [OneTimeRappor(), OneTimeRappor().filter_size],
     'RAPPOR': [Rappor(), Rappor().filter_size],
 }
@@ -173,4 +183,8 @@ def parse_xls(file):
             runs.append(get_run(row))
 
 
-parse_xls('/media/barry/Data/DPDisprover/results/dpsniper/dpsniper_out.xlsx')
+parse_xls(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'results/dpsniper/dpsniper_out_0.06.xlsx'))
+
+if __name__ == '__main__':
+    print(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'results/dpsniper/dpsniper_out.xlsx'))
+    exit(0)

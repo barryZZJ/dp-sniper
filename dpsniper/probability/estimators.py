@@ -1,3 +1,4 @@
+from dpsniper.attack.ml_attack import MlAttack
 from dpsniper.mechanisms.abstract import Mechanism
 from dpsniper.attack.attack import Attack
 from dpsniper.utils.my_logging import log
@@ -93,17 +94,23 @@ class PrEstimator:
 
         if not self.use_parallel_executor:
             res = self._compute_frac_cnt((self, attack, a, self.n_samples))
-            frac_cnt, log_bs, log_bprobs = res
+            if self.log_outputs:
+                frac_cnt, log_bs, log_bprobs = res
+            else:
+                frac_cnt = res
         else:
             inputs = [(self, attack, a, batch) for batch in split_into_parts(self.n_samples, self.config.n_processes)]
             res = the_parallel_executor.execute(self._compute_frac_cnt, inputs)
-            counts = []
-            for count, frac_log_b, frac_log_bprob in res:
-                counts.append(count)
-                log_bs.extend(frac_log_b)
-                log_bprobs.extend(frac_log_bprob)
-
+            if self.log_outputs:
+                counts = []
+                for count, frac_log_b, frac_log_bprob in res:
+                    counts.append(count)
+                    log_bs.extend(frac_log_b)
+                    log_bprobs.extend(frac_log_bprob)
+            else:
+                counts = res
             frac_cnt = math.fsum(counts)
+
         if self.log_outputs:
             if len(log_bs) > 0:
                 log_bs, log_bprobs = unique(log_bs, log_bprobs)
@@ -118,11 +125,47 @@ class PrEstimator:
         pr = frac_cnt / self.n_samples
         return pr
 
+    def compute_pr_estimates(self, a, classifier, t_range, q_range):
+        """
+        Returns:
+             List of estimate of Pr[M(a) in S]
+        """
+        assert not self.log_outputs, "log_outputs is True but not supported"
+
+        if not self.use_parallel_executor:
+            frac_countses = self._compute_frac_cnts((self, classifier, t_range, q_range, a, self.n_samples))
+        else:
+            inputs = [(self, classifier, t_range, q_range, a, batch) for batch in split_into_parts(self.n_samples, self.config.n_processes)]
+            res = the_parallel_executor.execute(self._compute_frac_cnts, inputs)
+            res = np.asarray(res)
+            frac_countses = []
+            for i in range(len(t_range)):
+                frac_countses.append(math.fsum(res[:, i]))
+
+        prs = [frac_cnt / self.n_samples for frac_cnt in frac_countses]
+        return prs
+
     def _get_samples(self, a, n_samples):
         return self.mechanism.m(a, n_samples=n_samples)
 
     def _check_attack(self, bs, attack):
         return attack.check(bs)
+
+    def _get_attacks(self, classifier, t_range, q_range):
+        for t, q in zip(t_range, q_range):
+            yield MlAttack(classifier, t, q)
+
+    def _compute_frac_cnts(self, args):
+        pr_estimator, classifier, t_range, q_range, a, n_samples = args
+
+        frac_counts = [[] for _ in range(len(t_range))]
+        for sequential_size in split_by_batch_size(n_samples, pr_estimator.config.prediction_batch_size):
+            bs = pr_estimator._get_samples(a, sequential_size)
+            for i, attack in enumerate(self._get_attacks(classifier, t_range, q_range)):
+                res = pr_estimator._check_attack(bs, attack)
+                frac_counts[i].append(math.fsum(res))
+        frac_countses = [math.fsum(frac_counts[i]) for i in range(len(t_range))]
+        return frac_countses
 
     def _compute_frac_cnt(self, args):
         pr_estimator, attack, a, n_samples = args
@@ -157,8 +200,9 @@ class PrEstimator:
                 log_bprobs.extend(bb)
 
             frac_counts += [math.fsum(res)]
-
-        return math.fsum(frac_counts), log_bs, log_bprobs
+        if self.log_outputs:
+            return math.fsum(frac_counts), log_bs, log_bprobs
+        return math.fsum(frac_counts)
 
     def get_variance(self):
         """
@@ -173,7 +217,7 @@ class EpsEstimator:
         eps(a, a', S) = log(Pr[M(a) in S]) - log(Pr[M(a') in S])
     """
 
-    def __init__(self, pr_estimator: PrEstimator, allow_swap: bool = False):
+    def __init__(self, pr_estimator: PrEstimator, allow_swap: bool = False, log_probs=True):
         """
         Creates an estimator.
 
@@ -183,20 +227,40 @@ class EpsEstimator:
         """
         self.pr_estimator = pr_estimator
         self.allow_swap = allow_swap
+        self.log_probs = log_probs
 
-    def compute_eps_estimate(self, a1, a2, attack: Attack) -> (float, float, bool):
+    def compute_eps_estimates(self, a1, a2, classifier, t_range, q_range, return_probs=False):
+        p1s = self.pr_estimator.compute_pr_estimates(a1, classifier, t_range, q_range)
+        p2s = self.pr_estimator.compute_pr_estimates(a2, classifier, t_range, q_range)
+        if self.log_probs:
+            log.data("p1s", p1s)
+            log.data("p2s", p2s)
+        assert not self.allow_swap, "not support allow_swap"
+
+        epss = []
+        lcbs = []
+        for p1, p2 in zip(p1s, p2s):
+            epss.append(self._compute_eps(p1, p2))
+            lcbs.append(self._compute_lcb(p1, p2))
+
+        if return_probs:
+            return epss, lcbs, p1s, p2s
+        return epss, lcbs
+
+
+    def compute_eps_estimate(self, a1, a2, attack: Attack, return_probs=False) -> (float, float, bool):
         """
         Estimates eps(a2, a2, attack) using samples.
 
         Returns:
             a tuple (eps, lcb), where eps is the eps estimate and lcb is a lower confidence bound for eps
         """
-        swapped = False
         p1 = self.pr_estimator.compute_pr_estimate(a1, attack)
         p2 = self.pr_estimator.compute_pr_estimate(a2, attack)
-        log.info("p1=%f, p2=%f", p1, p2)
-        log.data("p1", p1)
-        log.data("p2", p2)
+        # log.info("p1=%f, p2=%f", p1, p2)
+        if self.log_probs:
+            log.data("p1", p1)
+            log.data("p2", p2)
 
         if p1 < p2:
             if self.allow_swap:
@@ -207,6 +271,8 @@ class EpsEstimator:
 
         eps = self._compute_eps(p1, p2)
         lcb = self._compute_lcb(p1, p2)
+        if return_probs:
+            return eps, lcb, p1, p2
         return eps, lcb
 
     @staticmethod

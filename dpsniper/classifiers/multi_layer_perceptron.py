@@ -58,6 +58,7 @@ class MultiLayerPerceptron(StableClassifier):
         self.regularization_weight = regularization_weight
 
         self.state_dict_file = state_dict_file  # representation of model for pickling
+        self.do_log = do_log
         self.tensorboard_dir = get_output_directory('training', 'tensorboard') if do_log else None
 
         # initialize torch-specific fields
@@ -145,7 +146,7 @@ class MultiLayerPerceptron(StableClassifier):
         optimizer, scheduler = self.optimizer_factory.create_optimizer_with_scheduler(self.model.parameters())
 
         # logging
-        log_dir = self._get_tensorboard_log_dir()
+        # log_dir = self._get_tensorboard_log_dir()
         # writer = SummaryWriter(log_dir=log_dir)
         writer=None
 
@@ -229,13 +230,14 @@ class MultiLayerPerceptron(StableClassifier):
 
     def __getstate__(self):
         # store torch model to a file (for pickling)
-        self.state_dict_file = NamedTemporaryFile(
-            dir=get_output_directory('training', 'models'),
-            prefix='MultiLayerPerceptron_',
-            suffix='.model',
-            delete=False).name
-        state_dict = self.model.state_dict()
-        torch.save(state_dict, self.state_dict_file)
+        if self.do_log:
+            self.state_dict_file = NamedTemporaryFile(
+                dir=get_output_directory('training', 'models'),
+                prefix='MultiLayerPerceptron_',
+                suffix='.model',
+                delete=False).name
+            state_dict = self.model.state_dict()
+            torch.save(state_dict, self.state_dict_file)
 
         # capture what is normally pickled
         state = self.__dict__.copy()

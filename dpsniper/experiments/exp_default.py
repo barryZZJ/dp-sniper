@@ -42,48 +42,48 @@ def run_exp_default(series_name: str, use_mlp: bool, output_path: str, config: '
                 label=class_name(mechanism))
         runner.experiments.append(MyExperiment(class_name(mechanism), mechanism, input_generator, factory, config))
 
-    domain = InputDomain(1, InputBaseType.FLOAT, [-10, 10])
-    run_dpsniper(LaplaceMechanism(), PatternGenerator(domain, False), 1)
-
-    domain = InputDomain(1, InputBaseType.INT, [0, 5])
-    run_dpsniper(TruncatedGeometricMechanism(), PatternGenerator(domain, False), 1)
-
-    domain = InputDomain(5, InputBaseType.INT, [0, 10])
-    run_dpsniper(NoisyHist1(), PatternGenerator(domain, False), 5)
-    run_dpsniper(NoisyHist2(), PatternGenerator(domain, False), 5)
-
-    domain = InputDomain(5, InputBaseType.FLOAT, [-10, 10])
-    run_dpsniper(ReportNoisyMax1(), PatternGenerator(domain, True), 1)
-    run_dpsniper(ReportNoisyMax2(), PatternGenerator(domain, True), 1)
-    run_dpsniper(ReportNoisyMax3(), PatternGenerator(domain, True), 1)
-    run_dpsniper(ReportNoisyMax4(), PatternGenerator(domain, True), 1)
-
+    # domain = InputDomain(1, InputBaseType.FLOAT, [-10, 10])
+    # run_dpsniper(LaplaceMechanism(), PatternGenerator(domain, False), 1)
+    #
+    # domain = InputDomain(1, InputBaseType.INT, [0, 5])
+    # run_dpsniper(TruncatedGeometricMechanism(), PatternGenerator(domain, False), 1)
+    #
+    # domain = InputDomain(5, InputBaseType.INT, [0, 10])
+    # run_dpsniper(NoisyHist1(), PatternGenerator(domain, False), 5)
+    # run_dpsniper(NoisyHist2(), PatternGenerator(domain, False), 5)
+    #
+    # domain = InputDomain(5, InputBaseType.FLOAT, [-10, 10])
+    # run_dpsniper(ReportNoisyMax1(), PatternGenerator(domain, True), 1)
+    # run_dpsniper(ReportNoisyMax2(), PatternGenerator(domain, True), 1)
+    # run_dpsniper(ReportNoisyMax3(), PatternGenerator(domain, True), 1)
+    # run_dpsniper(ReportNoisyMax4(), PatternGenerator(domain, True), 1)
+    #
     domain = InputDomain(10, InputBaseType.FLOAT, [-10, 10])
-    run_dpsniper(SparseVectorTechnique1(c=1, t=0.5), PatternGenerator(domain, True), 20,
-                 feature_transform=FlagsFeatureTransformer([-1]))
+    # run_dpsniper(SparseVectorTechnique1(c=1, t=0.5), PatternGenerator(domain, True), 20,
+    #              feature_transform=FlagsFeatureTransformer([-1]))
     run_dpsniper(SparseVectorTechnique2(c=1, t=1), PatternGenerator(domain, True), 20,
                  feature_transform=FlagsFeatureTransformer([-1]))
-    run_dpsniper(SparseVectorTechnique3(c=1, t=1), PatternGenerator(domain, True), 30,
-                 feature_transform=FlagsFeatureTransformer([-1000.0, -2000.0]))
+    # run_dpsniper(SparseVectorTechnique3(c=1, t=1), PatternGenerator(domain, True), 30,
+    #              feature_transform=FlagsFeatureTransformer([-1000.0, -2000.0]))
     run_dpsniper(SparseVectorTechnique4(c=1, t=1), PatternGenerator(domain, True), 20,
                  feature_transform=FlagsFeatureTransformer([-1]))
-    run_dpsniper(SparseVectorTechnique5(c=1, t=1), PatternGenerator(domain, True), 10)
-    run_dpsniper(SparseVectorTechnique6(c=1, t=1), PatternGenerator(domain, True), 10)
-
-    domain = InputDomain(1, InputBaseType.INT, [-10, 10])
-    r = Rappor()
-    run_dpsniper(r, PatternGenerator(domain, False), r.filter_size)
-    otr = OneTimeRappor()
-    run_dpsniper(otr, PatternGenerator(domain, False), otr.filter_size)
-
-    domain = InputDomain(1, InputBaseType.FLOAT, [-10, 10])
-    lp = LaplaceParallel(eps=0.005, n_parallel=20)
-    run_dpsniper(lp, PatternGenerator(domain, False), lp.get_n_parallel())
-
-    domain = InputDomain(10, InputBaseType.FLOAT, [-10, 10])
-    run_dpsniper(SVT34Parallel(), PatternGenerator(domain, True), 80,
-                 feature_transform=FlagsFeatureTransformer([-1, -1000.0, -2000.0]))
-    run_dpsniper(PrefixSum(), PatternGenerator(domain, True), 10)
-    run_dpsniper(NumericalSVT(), PatternGenerator(domain, True), 10)
+    # run_dpsniper(SparseVectorTechnique5(c=1, t=1), PatternGenerator(domain, True), 10)
+    # run_dpsniper(SparseVectorTechnique6(c=1, t=1), PatternGenerator(domain, True), 10)
+    #
+    # domain = InputDomain(1, InputBaseType.INT, [-10, 10])
+    # r = Rappor()
+    # run_dpsniper(r, PatternGenerator(domain, False), r.filter_size)
+    # otr = OneTimeRappor()
+    # run_dpsniper(otr, PatternGenerator(domain, False), otr.filter_size)
+    #
+    # domain = InputDomain(1, InputBaseType.FLOAT, [-10, 10])
+    # lp = LaplaceParallel(eps=0.005, n_parallel=20)
+    # run_dpsniper(lp, PatternGenerator(domain, False), lp.get_n_parallel())
+    #
+    # domain = InputDomain(10, InputBaseType.FLOAT, [-10, 10])
+    # # run_dpsniper(SVT34Parallel(), PatternGenerator(domain, True), 80,
+    # #              feature_transform=FlagsFeatureTransformer([-1, -1000.0, -2000.0]))
+    # run_dpsniper(PrefixSum(), PatternGenerator(domain, True), 10)
+    # run_dpsniper(NumericalSVT(), PatternGenerator(domain, True), 10)
 
     runner.run_all(config.n_processes)
